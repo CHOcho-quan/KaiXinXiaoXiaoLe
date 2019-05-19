@@ -5,43 +5,73 @@ import numpy as np
 if __name__ == '__main__':
     # Image Preprocessing
     img = cv2.imread('kxxxl3.png')
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lightness = np.mean(hsv[:, :, 2])
-    var = np.std(hsv[:, :, 2])
-    corrected = utils.preprocessing(img, lightness, var)
 
-    # The First step is to locate the screen of my Pad
+    camera = cv2.VideoCapture(0)
+    success, img = camera.read()
+    while (success):
+        # The First step is to locate the screen of my Pad
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        lightness = np.mean(hsv[:, :, 2])
+        var = np.std(hsv[:, :, 2])
+        corrected = utils.preprocessing(img, lightness, var)
+        hsv = cv2.cvtColor(corrected, cv2.COLOR_BGR2HSV)
 
-    # Getting the screen, now we are going to get the animals as a matrix
-    # Cut the mask to get the animal matrix
-    mask = cv2.inRange(hsv, np.array([100, 60, 60]), np.array([124, 255, 255]))
-    y, x = mask.shape
-    mask = mask[int(y / 5):int(y * 5.05 / 6), :]
-    img = img[int(y / 5):int(y * 5.05 / 6), :]
+        _, binary = cv2.threshold(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 128, 255, cv2.THRESH_BINARY)
+        pixelList = np.where(binary==255)
+        left = np.min(pixelList[1])
+        right = np.max(pixelList[1])
+        top = np.min(pixelList[0])
+        bottom = np.max(pixelList[0])
 
-    # Using Open operation to make the noise free of the image
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5, 5))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        img = img[top:bottom, left:right]
+        hsv = hsv[top:bottom, left:right]
 
-    # Now try to count how many animals are there in the matrix
-    indexes = np.array(np.argwhere(mask))
-    top = np.min(indexes[:, 0])
-    bottom = np.max(indexes[:, 0])
-    left = np.min(indexes[:, 1])
-    right = np.max(indexes[:, 1])
-    singleLength = utils.findSingle(image=mask)
-    animalHorizontal = min(int((right - left) / singleLength) + 1, 9)
-    animalVertical = min(int((bottom - top) / singleLength) + 1, 9)
-    print(animalVertical, animalHorizontal)
+        y, x, _ = img.shape
+        img = img[int(y / 4.5):int(y * 5.3 / 6), int(x / 7):int(x * 5 / 6)]
+        hsv = hsv[int(y / 4.5):int(y * 5.3 / 6), int(x / 7):int(x * 5 / 6)]
+        mask = cv2.inRange(hsv, np.array([90, 0, 0]), np.array([124, 255, 255]))
 
-    # Now we construct the total animal matrix up to single animals
-    animals = np.zeros(shape=(animalVertical, animalHorizontal))
-    originalMatrix = img[top:bottom, left:right]
-    HSVMatrix = cv2.cvtColor(originalMatrix, cv2.COLOR_BGR2HSV)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(35, 35))
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT,(10, 10))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        # mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel)
 
-    for y in range(animalVertical):
-        for x in range(animalHorizontal):
-            animals[y, x] = np.mean(HSVMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 0])
-    print(animals)
-    cv2.imshow("originalMatrix", originalMatrix)
-    cv2.waitKey(0)
+        cv2.imshow("Try", mask[:, ::-1])
+        cv2.waitKey(0)
+
+        VerticalHist = np.sum(255-mask, axis=0)
+        HorizontalHist = np.sum(255-mask, axis=1)
+        print(VerticalHist / 255, mask.shape[1])
+        indexes = np.argwhere(VerticalHist / 255 > mask.shape[1] / 6)
+        indexes2 = np.argwhere(HorizontalHist / 255 > mask.shape[0] / 8)
+        pixelList = np.where(mask==0)
+
+        left = max(np.min(indexes)-10, 0)
+        right = np.max(indexes)+10
+        top = max(np.min(indexes2)-5, 0)
+        bottom = np.max(indexes2)+5
+        print(left, right, top, bottom)
+
+        img2 = img[top:bottom, left:right]
+        hsv2 = hsv[top:bottom, left:right]
+        # cv2.imshow("Try", mask[top:bottom, left:right])
+        # cv2.waitKey(0)
+
+        singleLength = utils.findSingle(img)
+        animalHorizontal = min(int((right - left) / singleLength) + 1, 9)
+        animalVertical = min(int((bottom - top) / singleLength) + 1, 9)
+        print(animalVertical, animalHorizontal)
+
+        # Now we construct the total animal matrix up to single animals
+        animals = np.zeros(shape=(animalVertical, animalHorizontal))
+        originalMatrix = img[top:bottom, left:right]
+        HSVMatrix = cv2.cvtColor(originalMatrix, cv2.COLOR_BGR2HSV)
+
+        for y in range(animalVertical):
+            for x in range(animalHorizontal):
+                animals[y, x] = np.mean(HSVMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 0])
+        print(animals)
+        cv2.imshow("Try", img2)
+        cv2.waitKey(0)
+
+        success, img = camera.read()

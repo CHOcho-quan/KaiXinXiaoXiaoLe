@@ -35,4 +35,4 @@ def findSingle(image):
 
     """
     maxNum = 9
-    return int(image.shape[0] / maxNum)
+    return int(image.shape[1] / maxNum)
