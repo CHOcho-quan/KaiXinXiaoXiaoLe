@@ -4,14 +4,13 @@ import numpy as np
 
 if __name__ == '__main__':
     # Image Preprocessing
-    img = cv2.imread('kxxxl3.png')
+    img = cv2.imread('kxxxl2.png')
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lightness = np.mean(hsv[:, :, 2])
     var = np.std(hsv[:, :, 2])
     corrected = utils.preprocessing(img, lightness, var)
 
     # The First step is to locate the screen of my Pad
-    
 
     # Getting the screen, now we are going to get the animals as a matrix
     # Cut the mask to get the animal matrix
@@ -30,9 +29,12 @@ if __name__ == '__main__':
     bottom = np.max(indexes[:, 0])
     left = np.min(indexes[:, 1])
     right = np.max(indexes[:, 1])
-    singleLength = utils.findSingle(image=mask)
-    animalHorizontal = min(int((right - left) / singleLength) + 1, 9)
-    animalVertical = min(int((bottom - top) / singleLength) + 1, 9)
+    # singleLength = utils.findSingle(image=mask)
+    # animalHorizontal = min(int((right - left) / singleLength) + 1, 9)
+    # animalVertical = min(int((bottom - top) / singleLength) + 1, 9)
+    animalVertical = 7
+    animalHorizontal = 7
+    singleLength = int((right - left) / animalVertical)
     print(animalVertical, animalHorizontal)
 
     # Now we construct the total animal matrix up to single animals

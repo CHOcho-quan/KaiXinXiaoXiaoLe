@@ -17,7 +17,11 @@ if __name__ == '__main__':
         hsv = cv2.cvtColor(corrected, cv2.COLOR_BGR2HSV)
 
         _, binary = cv2.threshold(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 128, 255, cv2.THRESH_BINARY)
-        pixelList = np.where(binary==255)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(10, 10))
+        binary2 = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+        # cv2.imshow("bianry", binary2)
+        # cv2.waitKey(0)
+        pixelList = np.where(binary2==255)
         left = np.min(pixelList[1])
         right = np.max(pixelList[1])
         top = np.min(pixelList[0])
@@ -43,7 +47,7 @@ if __name__ == '__main__':
         HorizontalHist = np.sum(255-mask, axis=1)
         print(VerticalHist / 255, mask.shape[1])
         indexes = np.argwhere(VerticalHist / 255 > mask.shape[1] / 6)
-        indexes2 = np.argwhere(HorizontalHist / 255 > mask.shape[0] / 8)
+        indexes2 = np.argwhere(HorizontalHist / 255 > mask.shape[0] / 7)
         pixelList = np.where(mask==0)
 
         left = max(np.min(indexes)-10, 0)
@@ -60,18 +64,52 @@ if __name__ == '__main__':
         singleLength = utils.findSingle(img)
         animalHorizontal = min(int((right - left) / singleLength) + 1, 9)
         animalVertical = min(int((bottom - top) / singleLength) + 1, 9)
+        if img2.shape[0] / singleLength < animalVertical - 0.5:
+            animalVertical -= 1
+        if img2.shape[1] / singleLength < animalHorizontal - 0.5:
+            animalHorizontal -= 1
         print(animalVertical, animalHorizontal)
 
         # Now we construct the total animal matrix up to single animals
         animals = np.zeros(shape=(animalVertical, animalHorizontal))
         originalMatrix = img[top:bottom, left:right]
         HSVMatrix = cv2.cvtColor(originalMatrix, cv2.COLOR_BGR2HSV)
+        offset = 5
 
-        for y in range(animalVertical):
-            for x in range(animalHorizontal):
-                animals[y, x] = np.mean(HSVMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 0])
-        print(animals)
         cv2.imshow("Try", img2)
         cv2.waitKey(0)
+
+        """
+        0 : Blank, 1 : Fox, 2 : Frog, 3 : Chicken, 4 : BlueShit, 5 : hawk, 6 : Bear, 7 : Phinex
+
+        """
+        for y in range(animalVertical):
+            for x in range(animalHorizontal):
+                b = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 0])
+                g = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 1])
+                r = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 2])
+                # print(b, g, r)
+                if g > b and g > r:
+                    animals[y, x] = 2
+                if r > g and r > b:
+                    if b > g:
+                        animals[y, x] = 1
+                    else:
+                        if g > 2 * b:
+                            animals[y, x] = 3
+                        animals[y, x] = 6
+                if b > r and b > g:
+                    if r > g:
+                        animals[y, x] = 5
+                    if g > r:
+                        # 0 or 4
+                        if b > 110:
+                            animals[y, x] = 0
+                        else:
+                            animals[y, x] = 4
+                # print(np.mean(HSVMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 0]))
+                # cv2.imshow("hsv", originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength+offset:(x+1)*singleLength+offset, :])
+                # cv2.waitKey(0)
+        print(animals)
 
         success, img = camera.read()
