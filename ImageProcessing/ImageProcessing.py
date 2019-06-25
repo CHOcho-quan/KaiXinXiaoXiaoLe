@@ -27,15 +27,15 @@ def getPadLoc(img):
 
 def getXXLLoc(img, hsv):
     y, x, _ = img.shape
-    img = img[int(y / 4.5):int(y * 5 / 6), int(x / 7):int(x * 5 / 6)]
-    hsv = hsv[int(y / 4.5):int(y * 5 / 6), int(x / 7):int(x * 5 / 6)]
+    img = img[int(y / 4.5):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
+    hsv = hsv[int(y / 4.5):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
     mask = cv2.inRange(hsv, np.array([90, 0, 0]), np.array([124, 255, 255]))
     mask2 = cv2.inRange(hsv, np.array([0, 0, 185]), np.array([180, 55, 255]))
 
     # try_mask = cv2.inRange(hsv, np.array([0, 0, 0]), np.array([180, 255, 100]))
     #
-    # cv2.imshow("t", try_mask)
-    # cv2.waitKey(0)
+    cv2.imshow("t", img)
+    cv2.waitKey(0)
 
     mask = cv2.bitwise_or(mask, mask2)
 
@@ -74,10 +74,13 @@ def getXXLLoc(img, hsv):
 
     return img, img2, hsv2, int(y / 4.5), top, bottom, int(x / 7), left, right
 
-def getRowColumnNum(img, right, left, bottom, top):
+def getRowColumnNum(img, img2, right, left, bottom, top):
+    # cv2.imshow("img", img)
+    # cv2.waitKey(0)
     singleLength = utils.findSingle(img)
     animalHorizontal = min(int((right - left) / singleLength) + 1, 9)
     animalVertical = min(int((bottom - top) / singleLength) + 1, 9)
+    print(animalVertical, animalHorizontal)
     if img2.shape[0] / singleLength < animalVertical - 0.5:
         animalVertical -= 1
     if img2.shape[1] / singleLength < animalHorizontal - 0.5:
@@ -85,7 +88,7 @@ def getRowColumnNum(img, right, left, bottom, top):
     print(animalVertical, animalHorizontal)
     return animalVertical, animalHorizontal, singleLength
 
-def getAnimalMatrix(animalVertical, animalHorizontal, img2):
+def getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2):
     animals = np.zeros(shape=(animalVertical, animalHorizontal))
     originalMatrix = img2
     HSVMatrix = cv2.cvtColor(originalMatrix, cv2.COLOR_BGR2HSV)
@@ -101,29 +104,29 @@ def getAnimalMatrix(animalVertical, animalHorizontal, img2):
                 animals[y, x] = 0
                 continue
             if g > b and g > r:
-                animals[y, x] = 2
+                animals[y, x] = 3
             if r > g and r > b:
                 if b > g:
                     if b > 100 and g > 100:
                         animals[y, x] = 7
                     elif b > 100:
-                        animals[y, x] = 5
+                        animals[y, x] = 6
                     else:
                         animals[y, x] = 1
                 else:
-                    if g > 90:
-                        animals[y, x] = 3
+                    if g > 80:
+                        animals[y, x] = 2
                     else:
-                        animals[y, x] = 6
+                        animals[y, x] = 4
             if b > r and b > g:
                 if r > g:
-                    animals[y, x] = 5
+                    animals[y, x] = 6
                 if g > r:
                     # 0 or 4
                     if b > 150:
                         animals[y, x] = 0
                     else:
-                        animals[y, x] = 4
+                        animals[y, x] = 5
     return animals
 
 if __name__ == '__main__':
@@ -132,8 +135,8 @@ if __name__ == '__main__':
     camera = cv2.VideoCapture(0)
     success, ori_img = camera.read()
     img, hsv, (top, bottom, left, right) = getPadLoc(ori_img)
-    img, img2, hsv2, biasy, top2, bottom2, biasx, left2, right2 = getXXLLoc(img, hsv)
-    animalVertical, animalHorizontal, singleLength = getRowColumnNum(img, right2, left2, bottom2, top2)
+    img3, img2, hsv2, biasy, top2, bottom2, biasx, left2, right2 = getXXLLoc(img, hsv)
+    animalVertical, animalHorizontal, singleLength = getRowColumnNum(img3, img2, right2, left2, bottom2, top2)
     while (success):
         img2 = ori_img[(biasy+top+top2):(biasy+top+bottom2), (biasx+left+left2):(biasx+left+right2)]
         # img2 = ori_img[top:bottom, left:right]
@@ -142,10 +145,10 @@ if __name__ == '__main__':
         cv2.waitKey(0)
 
         # Now we construct the total animal matrix up to single animals
-        animals = getAnimalMatrix(animalVertical, animalHorizontal, img2)
+        animals = getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2)
 
         """
-        0 : Blank, 1 : Fox, 2 : Frog, 3 : Chicken, 4 : BlueShit, 5 : hawk, 6 : Bear, 7 : Phinex
+        0 : Blank, 1 : Fox, 2 : Chicken, 3 : Frog, 4 : Bear, 5 : Blueshit, 6 : Hawk, 7 : Phinex
 
         """
         print(animals)
