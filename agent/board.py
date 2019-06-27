@@ -1,7 +1,7 @@
 import numpy as np
 
 class Board:
-    def __init__(self,width,height):
+    def __init__(self,height,width):
         self.width = width
         self.height = height
         self.animal_mat = []
@@ -812,7 +812,7 @@ class Board:
         return self.get_state(), self.score-old_score,False
 
     def reset(self):
-        new_mat = np.random.randint(-1,7,(7,7))
+        new_mat = np.random.randint(-1,7,(self.height,self.width))
         new_mat = new_mat.tolist()
         self.get_mat(new_mat)
         return self.get_state()

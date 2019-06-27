@@ -23,19 +23,22 @@ def getPadLoc(img):
     img = img[top:bottom, left:right]
     hsv = hsv[top:bottom, left:right]
 
+    # cv2.imshow("img", img)
+    # cv2.waitKey(0)
+
     return img, hsv, (top, bottom, left, right)
 
 def getXXLLoc(img, hsv):
     y, x, _ = img.shape
-    img = img[int(y / 4.5):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
-    hsv = hsv[int(y / 4.5):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
+    img = img[int(y * 1.1 / 4):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
+    hsv = hsv[int(y * 1.1 / 4):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
     mask = cv2.inRange(hsv, np.array([90, 0, 0]), np.array([124, 255, 255]))
     mask2 = cv2.inRange(hsv, np.array([0, 0, 185]), np.array([180, 55, 255]))
 
     # try_mask = cv2.inRange(hsv, np.array([0, 0, 0]), np.array([180, 255, 100]))
     #
-    cv2.imshow("t", img)
-    cv2.waitKey(0)
+    # cv2.imshow("t", img)
+    # cv2.waitKey(0)
 
     mask = cv2.bitwise_or(mask, mask2)
 
@@ -45,7 +48,7 @@ def getXXLLoc(img, hsv):
     # cv2.imshow("t", mask)
     # cv2.waitKey(0)
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(25, 25))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(15, 15))
     kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT,(10, 10))
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     # mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel)
@@ -56,14 +59,14 @@ def getXXLLoc(img, hsv):
     VerticalHist = np.sum(255-mask, axis=0)
     HorizontalHist = np.sum(255-mask, axis=1)
     print(VerticalHist / 255, mask.shape[1])
-    indexes = np.argwhere(VerticalHist / 255 > mask.shape[1] / 5)
-    indexes2 = np.argwhere(HorizontalHist / 255 > mask.shape[0] / 6)
+    indexes = np.argwhere(VerticalHist / 255 > mask.shape[1] / 4)
+    indexes2 = np.argwhere(HorizontalHist / 255 > mask.shape[0] / 5)
     pixelList = np.where(mask==0)
 
     left = max(np.min(indexes)-10, 0)
     right = np.max(indexes)+10
-    top = max(np.min(indexes2)-5, 0)
-    bottom = np.max(indexes2)+5
+    top = max(np.min(indexes2)-10, 0)
+    bottom = np.max(indexes2)+10
     print(left, right, top, bottom)
 
     img2 = img[top:bottom, left:right]
@@ -72,7 +75,7 @@ def getXXLLoc(img, hsv):
     # cv2.imshow("Try", img2)
     # cv2.waitKey(0)
 
-    return img, img2, hsv2, int(y / 4.5), top, bottom, int(x / 7), left, right
+    return img, img2, hsv2, int(y * 1.1 / 4), top, bottom, int(x / 7), left, right
 
 def getRowColumnNum(img, img2, right, left, bottom, top):
     # cv2.imshow("img", img)
@@ -100,9 +103,9 @@ def getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2):
             g = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 1])
             r = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 2])
             print(b, g, r)
-            if b > 150:
-                animals[y, x] = 0
-                continue
+            # if b > 150:
+            #     animals[y, x] = 0
+            #     continue
             if g > b and g > r:
                 animals[y, x] = 3
             if r > g and r > b:
@@ -114,7 +117,7 @@ def getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2):
                     else:
                         animals[y, x] = 1
                 else:
-                    if g > 80:
+                    if g - b > 15:
                         animals[y, x] = 2
                     else:
                         animals[y, x] = 4
@@ -139,6 +142,11 @@ if __name__ == '__main__':
     animalVertical, animalHorizontal, singleLength = getRowColumnNum(img3, img2, right2, left2, bottom2, top2)
     while (success):
         img2 = ori_img[(biasy+top+top2):(biasy+top+bottom2), (biasx+left+left2):(biasx+left+right2)]
+        mask2 = cv2.inRange(cv2.cvtColor(img2, cv2.COLOR_BGR2HSV), np.array([0, 0, 185]), np.array([180, 55, 255]))
+        cv2.imshow("mask2", mask2)
+        cv2.waitKey(0)
+        if np.count_nonzero(mask2) / mask2.shape[0]*mask2.shape[1] > 0.6:
+            print("WIN")
         # img2 = ori_img[top:bottom, left:right]
         # img2 = img2[top2:bottom2, left2:right2]
         cv2.imshow('img2', img2)
