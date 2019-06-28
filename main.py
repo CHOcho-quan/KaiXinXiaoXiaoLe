@@ -10,8 +10,8 @@ if __name__=='__main__':
     img, img2, hsv2, biasy, top2, bottom2, biasx, left2, right2 = getXXLLoc(img, hsv)
     animalVertical, animalHorizontal, singleLength = getRowColumnNum(img, img2, right2, left2, bottom2, top2)
     print(int(left+(right-left)/2), int(top+3/4*(bottom-top)))
-    cv2.imshow("hello", cv2.circle(img=ori_img, center=(int(left+(right-left)/2), int(top+3/4*(bottom-top))), radius=5, color=(0, 0, 255)))
-    cv2.waitKey(0)
+    # cv2.imshow("hello", cv2.circle(img=ori_img, center=(int(left+(right-left)/2), int(top+3/4*(bottom-top))), radius=5, color=(0, 0, 255)))
+    # cv2.waitKey(0)
 
     env = Board(animalVertical, animalHorizontal)
     env.show()

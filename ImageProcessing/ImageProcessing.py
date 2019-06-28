@@ -30,8 +30,8 @@ def getPadLoc(img):
 
 def getXXLLoc(img, hsv):
     y, x, _ = img.shape
-    img = img[int(y * 1.1 / 4):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
-    hsv = hsv[int(y * 1.1 / 4):int(y * 5 / 6), int(x / 7):int(x * 5.1 / 6)]
+    img = img[int(y * 1.1 / 4):int(y * 4.8 / 6), int(x / 7):int(x * 5.1 / 6)]
+    hsv = hsv[int(y * 1.1 / 4):int(y * 4.8 / 6), int(x / 7):int(x * 5.1 / 6)]
     mask = cv2.inRange(hsv, np.array([90, 0, 0]), np.array([124, 255, 255]))
     mask2 = cv2.inRange(hsv, np.array([0, 0, 185]), np.array([180, 55, 255]))
 
@@ -63,10 +63,10 @@ def getXXLLoc(img, hsv):
     indexes2 = np.argwhere(HorizontalHist / 255 > mask.shape[0] / 5)
     pixelList = np.where(mask==0)
 
-    left = max(np.min(indexes)-10, 0)
-    right = np.max(indexes)+10
-    top = max(np.min(indexes2)-10, 0)
-    bottom = np.max(indexes2)+10
+    left = max(np.min(indexes)-5, 0)
+    right = np.max(indexes)+5
+    top = max(np.min(indexes2)-5, 0)
+    bottom = np.max(indexes2)+5
     print(left, right, top, bottom)
 
     img2 = img[top:bottom, left:right]
@@ -103,6 +103,8 @@ def getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2):
             g = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 1])
             r = np.mean(originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength, 2])
             print(b, g, r)
+            # cv2.imshow("ori", originalMatrix[y*singleLength:(y+1)*singleLength, x*singleLength:(x+1)*singleLength])
+            # cv2.waitKey(0)
             # if b > 150:
             #     animals[y, x] = 0
             #     continue
@@ -110,7 +112,7 @@ def getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2):
                 animals[y, x] = 3
             if r > g and r > b:
                 if b > g:
-                    if b > 100 and g > 100:
+                    if b > 130 and g > 130:
                         animals[y, x] = 7
                     elif b > 100:
                         animals[y, x] = 6
@@ -126,7 +128,7 @@ def getAnimalMatrix(singleLength, animalVertical, animalHorizontal, img2):
                     animals[y, x] = 6
                 if g > r:
                     # 0 or 4
-                    if b > 150:
+                    if b > 200:
                         animals[y, x] = 0
                     else:
                         animals[y, x] = 5
